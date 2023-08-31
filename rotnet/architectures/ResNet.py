@@ -2,7 +2,7 @@
 # Modified ResNet class to suit this repository's data flow.
 import torch
 import torch.nn as nn
-from torchvision.models.utils import load_state_dict_from_url
+from torch.hub import load_state_dict_from_url
 
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
@@ -317,7 +317,7 @@ class ResNet(nn.Module):
         filters = (filters * scalars.view(-1, 1, 1, 1).expand_as(filters)).cpu().clone()
 
         return filters
-        
+
 
 def _resnet(arch, block, layers, pretrained, progress, opt, **kwargs):
     model = ResNet(block, layers, opt, **kwargs)

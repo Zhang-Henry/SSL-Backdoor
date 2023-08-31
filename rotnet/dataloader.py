@@ -119,7 +119,7 @@ class GenericDataset(data.Dataset):
         # of training examples per category that would be used.
         # This input argument was introduced in order to be able
         # to use less annotated examples than what are available
-        # in a semi-superivsed experiment. By default all the 
+        # in a semi-superivsed experiment. By default all the
         # available training examplers per category are being used.
         self.num_imgs_per_cat = num_imgs_per_cat
 
@@ -165,20 +165,20 @@ class GenericDataset(data.Dataset):
                 ]
                 else:
                     transforms_list = [
-                        transforms.Scale(256),
+                        transforms.Resize(256),
                         transforms.CenterCrop(224),
                         lambda x: np.asarray(x),
                     ]
             else:
                 if self.random_sized_crop:
                     transforms_list = [
-                        transforms.RandomSizedCrop(224),
+                        transforms.RandomResizedCrop(224),
                         transforms.RandomHorizontalFlip(),
                         lambda x: np.asarray(x),
                     ]
                 else:
                     transforms_list = [
-                        transforms.Scale(256),
+                        transforms.Resize(256),
                         transforms.RandomCrop(224),
                         transforms.RandomHorizontalFlip(),
                         lambda x: np.asarray(x),
@@ -230,14 +230,14 @@ class GenericDataset(data.Dataset):
                 download=True, transform=self.transform)
         else:
             raise ValueError('Not recognized dataset {0}'.format(dname))
-        
+
         if num_imgs_per_cat is not None:
             self._keep_first_k_examples_per_category(num_imgs_per_cat)
-        
-    
+
+
     def _keep_first_k_examples_per_category(self, num_imgs_per_cat):
         print('num_imgs_per_category {0}'.format(num_imgs_per_cat))
-   
+
         if self.dataset_name=='cifar10':
             labels = self.data.test_labels if (self.split=='test') else self.data.train_labels
             data = self.data.test_data if (self.split=='test') else self.data.train_data
@@ -252,12 +252,12 @@ class GenericDataset(data.Dataset):
             if self.split=='test':
                 self.data.test_labels = labels
                 self.data.test_data = data
-            else: 
+            else:
                 self.data.train_labels = labels
                 self.data.train_data = data
 
             label2ind = buildLabelIndex(labels)
-            for k, v in label2ind.items(): 
+            for k, v in label2ind.items():
                 assert(len(v)==num_imgs_per_cat)
 
         elif self.dataset_name=='imagenet':

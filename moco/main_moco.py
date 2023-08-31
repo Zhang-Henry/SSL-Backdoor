@@ -160,7 +160,7 @@ def main():
     ])
 
 
-    args.save_folder = os.path.join('{}/{}'.format(args.save_folder_root, args.experiment_id), '_'.join(save_folder_terms))                                                                                                                             
+    args.save_folder = os.path.join('{}/{}'.format(args.save_folder_root, args.experiment_id), '_'.join(save_folder_terms))
     os.makedirs(args.save_folder, exist_ok=True)
     print(f"save_folder: '{args.save_folder}'")
 
@@ -379,7 +379,7 @@ def train(train_loader, model, optimizer, epoch, args):
                             inv_normalize,
                             transforms.ToPILImage()
                             ])
-    
+
     os.makedirs("{}/train_images".format(args.save_folder), exist_ok=True)
     img_ctr = 0
 
@@ -408,7 +408,7 @@ def train(train_loader, model, optimizer, epoch, args):
 
                     res = []
                     for k in topk:
-                        correct_k = correct[:k].view(-1).float().sum()
+                        correct_k = correct[:k].contiguous().view(-1).float().sum()
                         res.append(correct_k.mul_(100.0 / batch_size))
                     return res
 

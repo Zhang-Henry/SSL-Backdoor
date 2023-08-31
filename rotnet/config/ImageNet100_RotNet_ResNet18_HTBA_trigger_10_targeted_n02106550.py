@@ -1,4 +1,4 @@
-batch_size = 128
+batch_size = 64
 
 config = {}
 # set the parameters related to the training and testing set
@@ -9,7 +9,7 @@ data_train_opt['epoch_size'] = None
 data_train_opt['random_sized_crop'] = True
 data_train_opt['dataset_name'] = 'imagenet100'
 data_train_opt['split'] = 'train'
-data_train_opt['file_list'] = '/nfs3/code/aniruddha/ssl_backdoor/ssl-backdoor/moco/data/HTBA_trigger_10_targeted_n02106550/train/loc_random_loc-min_0.25_loc-max_0.75_alpha_0.00_width_50_rate_1.00_filelist.txt'
+data_train_opt['file_list'] = '/home/jianzhang/hrzhang/SSL-Backdoor/poison-generation/data/HTBA_trigger_10_targeted_n02106550/train/loc_random_loc-min_0.25_loc-max_0.75_alpha_0.00_width_50_rate_1.00_targeted_True_filelist.txt'
 # data_train_opt['file_list'] = '/nfs/ada/hpirsiav/users/anisaha1/code/ssl_backdoor/ssl-backdoor/moco/data/clean/train_ssl_filelist.txt'
 
 data_test_opt = {}
@@ -19,7 +19,7 @@ data_test_opt['epoch_size'] = None
 data_test_opt['random_sized_crop'] = False
 data_test_opt['dataset_name'] = 'imagenet100'
 data_test_opt['split'] = 'val'
-data_test_opt['file_list'] = '/nfs3/code/aniruddha/ssl_backdoor/ssl-backdoor/moco/data/clean/val_ssl_filelist.txt'
+data_test_opt['file_list'] = '/home/jianzhang/hrzhang/SSL-Backdoor/poison-generation/data/HTBA_trigger_10_targeted_n02106550/val_poisoned/loc_random_loc-min_0.10_loc-max_0.90_alpha_0.00_width_50_filelist.txt'
 # data_test_opt['file_list'] = '/nfs/ada/hpirsiav/users/anisaha1/code/ssl_backdoor/ssl-backdoor/moco/data/clean/val_ssl_filelist.txt'
 
 data_test_p_opt = {}
@@ -29,7 +29,7 @@ data_test_p_opt['epoch_size'] = None
 data_test_p_opt['random_sized_crop'] = False
 data_test_p_opt['dataset_name'] = 'imagenet100'
 data_test_p_opt['split'] = 'val'
-data_test_p_opt['file_list'] = '/nfs3/code/aniruddha/ssl_backdoor/ssl-backdoor/moco/data/clean/val_ssl_filelist.txt'
+data_test_p_opt['file_list'] = '/home/jianzhang/hrzhang/SSL-Backdoor/poison-generation/data/HTBA_trigger_10_targeted_n02106550/val_poisoned/loc_random_loc-min_0.10_loc-max_0.90_alpha_0.00_width_50_filelist.txt'
 # data_test_p_opt['file_list'] = '/nfs/ada/hpirsiav/users/anisaha1/code/ssl_backdoor/ssl-backdoor/moco/data/clean/val_ssl_filelist.txt'
 
 config['data_train_opt'] = data_train_opt
