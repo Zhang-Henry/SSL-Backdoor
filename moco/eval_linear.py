@@ -18,7 +18,7 @@ import torchvision.models as models
 import torch.nn.functional as F
 
 from eval_utils import AverageMeter, ProgressMeter, model_names, accuracy, get_logger, save_checkpoint
-from PIL import Image 
+from PIL import Image
 import numpy as np
 from moco.dataset import FileListDataset
 
@@ -71,8 +71,8 @@ parser.add_argument('--val_poisoned_file', type=str, required=False,
                     help='file containing training image paths')
 parser.add_argument('--eval_data', type=str, default="",
                     help='eval identifier')
-                                    
-        
+
+
 
 best_acc1 = 0
 
@@ -193,6 +193,11 @@ def main_worker(args):
         )
 
     if args.evaluate:
+        # train_val_loader = torch.utils.data.DataLoader(
+        #     FileListDataset(args.train_file, val_transform),
+        #     batch_size=args.batch_size, shuffle=False,
+        #     num_workers=args.workers, pin_memory=True,
+        # )
         val_loader = torch.utils.data.DataLoader(
             FileListDataset(args.val_file, val_transform),
             batch_size=args.batch_size, shuffle=False,
@@ -218,6 +223,7 @@ def main_worker(args):
         cached_feats = '%s/var_mean.pth.tar' % os.path.dirname(args.resume)
     else:
         cached_feats = '%s/var_mean.pth.tar' % os.path.dirname(args.save)
+    print("cached_feats:",cached_feats)
     if args.load_cache and os.path.exists(cached_feats):
         logger.info('load train feats from cache =>')
         train_var, train_mean = torch.load(cached_feats)
@@ -225,7 +231,7 @@ def main_worker(args):
         train_feats, _ = get_feats(train_val_loader, backbone, args)
         train_var, train_mean = torch.var_mean(train_feats, dim=0)
         torch.save((train_var, train_mean), cached_feats)
-        
+
 
     linear = nn.Sequential(
         Normalize(),
@@ -246,6 +252,8 @@ def main_worker(args):
     )
 
     # optionally resume from a checkpoint
+    print('----------------------')
+    print("resume:",args.resume)
     if args.resume:
         if os.path.isfile(args.resume):
             logger.info("=> loading checkpoint '{}'".format(args.resume))
@@ -275,7 +283,7 @@ def main_worker(args):
             class_dir_list = sorted(class_dir_list)
         # class_dir_list = sorted(os.listdir('/datasets/imagenet/train'))               # for ImageNet
 
-        
+
         acc1, _, conf_matrix_clean = validate_conf_matrix(val_loader, backbone, linear, args)
         acc1_p, _, conf_matrix_poisoned = validate_conf_matrix(val_poisoned_loader, backbone, linear, args)
 
@@ -294,7 +302,7 @@ def main_worker(args):
             # for target in range(1000):                # for ImageNet
                 f.write("{},{},{},{},,".format(imagenet_metadata_dict[class_dir_list[target]].replace(",",";"), target, conf_matrix_clean[target][target], conf_matrix_clean[:, target].sum() - conf_matrix_clean[target][target]))
                 f.write("{},{}\n".format(conf_matrix_poisoned[target][target], conf_matrix_poisoned[:, target].sum() - conf_matrix_poisoned[target][target]))
-                
+        print('Evaluation done!')
         return
 
     for epoch in range(args.start_epoch, args.epochs):

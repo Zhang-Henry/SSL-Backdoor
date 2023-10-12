@@ -1,0 +1,115 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+
+        {
+            "name": "optimize",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/hrzhang/projects/SSL-Backdoor/optimize_filter/optimize_filter.py",
+            "console": "integratedTerminal",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "2"
+            },
+            "justMyCode": true
+        },
+        {
+            "name": "optimize-unet-w",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/hrzhang/projects/SSL-Backdoor/optimize_filter/main.py",
+            "console": "integratedTerminal",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "2"
+            },
+            "justMyCode": true
+        },
+        {
+            "name": "rotnet",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                "--exp",
+                "ImageNet100_LinearClassifiers_ImageNet100_RotNet_ResNet18_Features_HTBA_trigger_10_targeted_n02106550",
+                "--save_folder",
+                "save"
+            ],
+            "justMyCode": true,
+            "cwd": "${fileDirname}"
+        },
+        {
+            "name": "rotnet_eval",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                "--exp",
+                "ImageNet100_LinearClassifiers_ImageNet100_RotNet_ResNet18_Features_HTBA_trigger_10_targeted_n02106550",
+                "--save_folder",
+                "save",
+                "--evaluate",
+                "--checkpoint",
+                "40",
+                "--eval_data",
+                "LinearClassifiers_n02106550"
+            ],
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "1"
+            },
+            "justMyCode": true,
+            "cwd": "${fileDirname}"
+        },
+        {
+            "name": "generate_poison_filter",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/hrzhang/projects/SSL-Backdoor/poison-generation/generate_poison_filter.py",
+            "console": "integratedTerminal",
+            "args": [
+                "/home/hrzhang/projects/SSL-Backdoor/poison-generation/cfg/custom_imagenet_test.cfg"
+            ],
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "5"
+            },
+            "justMyCode": true
+        },
+        {
+            "name": "generate_poison_ctrl",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/hrzhang/projects/SSL-Backdoor/poison-generation/generate_poison_ctrl.py",
+            "console": "integratedTerminal",
+            "args": [
+                "/home/hrzhang/projects/SSL-Backdoor/poison-generation/cfg/custom_imagenet_ctrl.cfg"
+            ],
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "justMyCode": true
+        },
+        {
+            "name": "jigsaw",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/hrzhang/projects/SSL-Backdoor/jigsaw/train_jigsaw.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--train_file",
+                "../poison-generation/data/custom_imagenet_unet/train/rate_1.00_targeted_True_filelist.txt",
+                "--val_file",
+                "../poison-generation/data/custom_imagenet_unet/val_poisoned/filelist.txt",
+                "--save","save/custom_imagenet_unet",
+                "--b","512",
+            ],
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "2"
+            },
+            "justMyCode": true,
+            "cwd": "/home/hrzhang/projects/SSL-Backdoor/jigsaw"
+        }
+    ]
+}

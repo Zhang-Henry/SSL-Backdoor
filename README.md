@@ -12,7 +12,7 @@ Large-scale unlabeled data has allowed recent progress in self-supervised learni
 
 ## Updates
 + **04/07/2021 -** Poison generation code added.
-+ **04/08/2021 -** MoCo v2, BYOL code added. 
++ **04/08/2021 -** MoCo v2, BYOL code added.
 + **04/14/2021 -** Jigsaw, RotNet code added.
 + **06/22/2022 -** SSL models (MoCo, BYOL, MSF), linear classifiers and poisoned validation data shared.
 
@@ -43,7 +43,7 @@ python create_imagenet_subset.py --subset imagenet100_classes.txt --full_imagene
 ```
 ## Poison Generation
 
-To generate poisoned ImageNet-100 images, create your own configuration file. Some examples, which we use for our targeted attack experiments, are in the cfg directory. 
+To generate poisoned ImageNet-100 images, create your own configuration file. Some examples, which we use for our targeted attack experiments, are in the cfg directory.
 
 + You can choose the poisoning to be Targeted (poison only one category) or Untargeted
 + The trigger can be text or an image (We used triggers introduced in [[2]](#2)).
@@ -87,7 +87,7 @@ CUDA_VISIBLE_DEVICES=0,1 python main_moco.py \
                         --lr 0.06 --batch-size 256 --multiprocessing-distributed \
                         --world-size 1 --rank 0 --aug-plus --mlp --cos --moco-align-w 0 \
                         --moco-unif-w 0 --moco-contr-w 1 --moco-contr-tau 0.2 \
-                        --dist-url tcp://localhost:10005 \ 
+                        --dist-url tcp://localhost:10005 \
                         --save-folder-root <path> \
                         --experiment-id <ID> <train-txt-file>
 ```
@@ -101,7 +101,7 @@ CUDA_VISIBLE_DEVICES=0 python eval_linear.py \
                         --val_file <path>
 ```
 
-We use the linear classifier normalization from [CompRess: Self-Supervised Learning by Compressing Representations](https://papers.nips.cc/paper/2020/file/975a1c8b9aee1c48d32e13ec30be7905-Paper.pdf) which says "To reduce the computational overhead of tuning the hyperparameters per experiment, we standardize the Linear evaluation as following. We first normalize the features by L2 norm, then shift and scale each dimension to have zero mean and unit variance." 
+We use the linear classifier normalization from [CompRess: Self-Supervised Learning by Compressing Representations](https://papers.nips.cc/paper/2020/file/975a1c8b9aee1c48d32e13ec30be7905-Paper.pdf) which says "To reduce the computational overhead of tuning the hyperparameters per experiment, we standardize the Linear evaluation as following. We first normalize the features by L2 norm, then shift and scale each dimension to have zero mean and unit variance."
 
 To evaluate linear classifier on clean and poisoned validation set:
 (This script loads the cached mean and variance from previous step.)
@@ -139,7 +139,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python -m train \
                                     --dataset imagenet --lr 2e-3 --emb 128 --method byol \
                                     --arch resnet18 --epoch 200 \
                                     --train_file_path <path> \
-                                    --train_clean_file_path <path> 
+                                    --train_clean_file_path <path>
                                     --val_file_path <path>
                                     --save_folder_root <path>
 ```

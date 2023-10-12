@@ -1,9 +1,9 @@
 import torch.nn as nn
 from model import get_model, get_head
-from eval.sgd import eval_sgd
+from eval.sgd import eval_sgd,eval_sgd2
 from eval.knn import eval_knn
 from eval.get_data import get_data
-
+import os
 
 class BaseMethod(nn.Module):
     """
@@ -19,7 +19,8 @@ class BaseMethod(nn.Module):
         self.num_pairs = cfg.num_samples * (cfg.num_samples - 1) // 2
         self.eval_head = cfg.eval_head
         self.emb_size = cfg.emb
-
+        # print(os.path.dirname(cfg.fname),os.path.basename(cfg.fname))
+        # self.clf_fname = os.path.join(os.path.dirname(cfg.fname), "linear", os.path.basename(cfg.fname), "{}.pt")
     def forward(self, samples):
         raise NotImplementedError
 
@@ -34,8 +35,9 @@ class BaseMethod(nn.Module):
         x_train, y_train = get_data(model, ds_clf, out_size, "cuda")
         x_test, y_test = get_data(model, ds_test, out_size, "cuda")
 
+
         acc_knn = eval_knn(x_train, y_train, x_test, y_test, self.knn)
-        acc_linear = eval_sgd(x_train, y_train, x_test, y_test)
+        acc_linear = eval_sgd2(x_train, y_train, x_test, y_test)
         del x_train, y_train, x_test, y_test
         self.train()
         return acc_knn, acc_linear

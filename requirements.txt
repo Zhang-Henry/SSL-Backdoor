@@ -64,10 +64,10 @@ smmap==5.0.0
 subprocess32==3.5.4
 sympy==1.12
 tensorboard-data-server==0.7.1
-torch==2.0.1+cu118
-torchaudio==2.0.2+cu118
+# torch==2.0.1+cu118
+# torchaudio==2.0.2+cu118
 torchnet==0.0.4
-torchvision==0.15.2+cu118
+# torchvision==0.15.2+cu118
 tornado==6.3.3
 tqdm==4.66.1
 triton==2.0.0

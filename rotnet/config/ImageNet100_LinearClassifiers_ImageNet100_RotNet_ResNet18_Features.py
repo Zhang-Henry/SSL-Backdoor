@@ -2,14 +2,14 @@ batch_size   = 32
 
 config = {}
 # set the parameters related to the training and testing set
-data_train_opt = {} 
+data_train_opt = {}
 data_train_opt['batch_size'] = batch_size
 data_train_opt['unsupervised'] = False
 data_train_opt['epoch_size'] = None
 data_train_opt['random_sized_crop'] = False
 data_train_opt['dataset_name'] = 'imagenet100'
 data_train_opt['split'] = 'train'
-data_train_opt['file_list'] = '/nfs3/data/aniruddha/train_ssl_filelist.txt'
+data_train_opt['file_list'] = '/home/hrzhang/projects/SSL-Backdoor/poison-generation/data/clean/train/clean_filelist.txt'
 
 data_test_opt = {}
 data_test_opt['batch_size'] = batch_size
@@ -18,7 +18,7 @@ data_test_opt['epoch_size'] = None
 data_test_opt['random_sized_crop'] = False
 data_test_opt['dataset_name'] = 'imagenet100'
 data_test_opt['split'] = 'val'
-data_test_opt['file_list'] = '/nfs3/data/aniruddha/val_ssl_filelist.txt'
+data_test_opt['file_list'] = '/home/hrzhang/projects/SSL-Backdoor/poison-generation/data/clean/val/clean_filelist.txt'
 
 data_test_p_opt = {}
 data_test_p_opt['batch_size'] = batch_size
@@ -38,7 +38,7 @@ config['max_num_epochs'] = 40
 networks = {}
 
 pretrained = '/nfs3/data/aniruddha/ssl_backdoor/ssl-backdoor/rotnet/experiments/ImageNet100_RotNet_ResNet18/model_net_epoch105'
-networks['feat_extractor'] = {'def_file': 'architectures/ResNet.py', 'pretrained': pretrained, 'opt': {'num_classes': 4},  'optim_params': None} 
+networks['feat_extractor'] = {'def_file': 'architectures/ResNet.py', 'pretrained': pretrained, 'opt': {'num_classes': 4},  'optim_params': None}
 
 net_opt_cls = [None] * 5
 net_opt_cls[0] = {'pool_type':'avg', 'nChannels':64, 'pool_size':12, 'num_classes': 100}

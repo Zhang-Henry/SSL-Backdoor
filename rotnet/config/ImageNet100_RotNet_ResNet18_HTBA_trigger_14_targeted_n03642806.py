@@ -19,7 +19,7 @@ data_test_opt['epoch_size'] = None
 data_test_opt['random_sized_crop'] = False
 data_test_opt['dataset_name'] = 'imagenet100'
 data_test_opt['split'] = 'val'
-data_test_opt['file_list'] = '/nfs3/code/aniruddha/ssl_backdoor/ssl-backdoor/moco/data/clean/val_ssl_filelist.txt'
+data_test_opt['file_list'] = '/home/hrzhang/projects/SSL-Backdoor/poison-generation/data/clean/val/clean_filelist.txt'
 # data_test_opt['file_list'] = '/nfs/ada/hpirsiav/users/anisaha1/code/ssl_backdoor/ssl-backdoor/moco/data/clean/val_ssl_filelist.txt'
 
 data_test_p_opt = {}
@@ -29,7 +29,7 @@ data_test_p_opt['epoch_size'] = None
 data_test_p_opt['random_sized_crop'] = False
 data_test_p_opt['dataset_name'] = 'imagenet100'
 data_test_p_opt['split'] = 'val'
-data_test_p_opt['file_list'] = '/nfs3/code/aniruddha/ssl_backdoor/ssl-backdoor/moco/data/clean/val_ssl_filelist.txt'
+data_test_p_opt['file_list'] = '/home/hrzhang/projects/SSL-Backdoor/poison-generation/data/clean/val/clean_filelist.txt'
 # data_test_p_opt['file_list'] = '/nfs/ada/hpirsiav/users/anisaha1/code/ssl_backdoor/ssl-backdoor/moco/data/clean/val_ssl_filelist.txt'
 
 config['data_train_opt'] = data_train_opt

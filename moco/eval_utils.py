@@ -34,7 +34,7 @@ def get_logger(logpath, filepath, package_files=[], displaying=True, saving=True
 
     return logger
 
-# TODO: Aniruddha use for eval 
+# TODO: Aniruddha use for eval
 class AverageMeter(object):
     """Computes and stores the average and current value"""
     def __init__(self, name, fmt=':f'):
@@ -87,7 +87,7 @@ def accuracy(output, target, topk=(1,)):
         # pdb.set_trace()
         res = []
         for k in topk:
-            correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
+            correct_k = correct[:k].contiguous().view(-1).float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
 

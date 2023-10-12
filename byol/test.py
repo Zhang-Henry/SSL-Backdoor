@@ -43,7 +43,7 @@ if __name__ == "__main__":
     clf_fname = os.path.join(os.path.dirname(cfg.fname), "linear", os.path.basename(cfg.fname), "{}.pt")
     if cfg.clf == "sgd":
         if cfg.evaluate:
-            acc, pred_var_stack, labels_var_stack, acc_p, pred_var_p_stack, labels_var_p_stack = eval_sgd(x_train, y_train, x_test, y_test, x_test_p, y_test_p, clf_fname, chkpt=cfg.clf_chkpt, evaluate=cfg.evaluate)    
+            acc, pred_var_stack, labels_var_stack, acc_p, pred_var_p_stack, labels_var_p_stack = eval_sgd(x_train, y_train, x_test, y_test, x_test_p, y_test_p, clf_fname, chkpt=cfg.clf_chkpt, evaluate=cfg.evaluate)
 
 
             pred_var_stack = torch.argmax(pred_var_stack, dim=1)
@@ -56,6 +56,8 @@ if __name__ == "__main__":
             for i in range(pred_var_stack.size(0)):
                 # update confusion matrix
                 conf_matrix_clean[int(labels_var_stack[i]), int(pred_var_stack[i])] += 1
+
+
 
             for i in range(pred_var_p_stack.size(0)):
                 # update confusion matrix

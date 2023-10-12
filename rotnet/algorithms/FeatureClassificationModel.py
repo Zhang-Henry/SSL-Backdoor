@@ -18,7 +18,7 @@ def accuracy(output, target, topk=(1,)):
 
     res = []
     for k in topk:
-        correct_k = correct[:k].view(-1).float().sum(0)
+        correct_k = correct[:k].contiguous().view(-1).float().sum(0)
         res.append(correct_k.mul_(100.0 / batch_size))
     return res
 
@@ -61,7 +61,7 @@ class FeatureClassificationModel(Algorithm):
         else:
             finetune_feat_extractor = None
         if do_train: # zero the gradients
-            self.optimizers['classifier'].zero_grad() 
+            self.optimizers['classifier'].zero_grad()
             if finetune_feat_extractor:
                 self.optimizers['feat_extractor'].zero_grad()
             else:
@@ -121,7 +121,7 @@ class FeatureClassificationModel(Algorithm):
         record['load_time'] = 100*(batch_load_time/total_time)
         record['process_time'] = 100*(batch_process_time/total_time)
 
-        # return record
+        return record
 
     def process_batch_conf_matrix(self, batch, do_train=True):
         #*************** LOAD BATCH (AND MOVE IT TO GPU) ********
@@ -143,7 +143,7 @@ class FeatureClassificationModel(Algorithm):
         else:
             finetune_feat_extractor = None
         if do_train: # zero the gradients
-            self.optimizers['classifier'].zero_grad() 
+            self.optimizers['classifier'].zero_grad()
             if finetune_feat_extractor:
                 self.optimizers['feat_extractor'].zero_grad()
             else:

@@ -89,8 +89,8 @@ if args_opt.checkpoint > 0:  # load checkpoint
 if not args_opt.evaluate:  # train the algorithm
     algorithm.solve(dloader_train, dloader_test, dloader_p_test)
 else:
-    eval_stats, pred_var_stack_all, labels_var_stack = algorithm.evaluate(dloader_test)  # evaluate the algorithm
-    eval_stats_p, pred_var_p_stack_all, labels_var_p_stack = algorithm.evaluate(dloader_p_test)  # evaluate the algorithm on poisoned data
+    eval_stats, pred_var_stack_all, labels_var_stack = algorithm.evaluate_conf_matrix(dloader_test)  # evaluate the algorithm
+    eval_stats_p, pred_var_p_stack_all, labels_var_p_stack = algorithm.evaluate_conf_matrix(dloader_p_test)  # evaluate the algorithm on poisoned data
 
     for layer_id in range(5):
         pred_var_stack = torch.argmax(pred_var_stack_all[layer_id], dim=1)

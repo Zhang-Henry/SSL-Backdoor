@@ -130,3 +130,9 @@ dmypy.json
 
 # Custom
 # poison-generation/data/
+*/save
+optimize_filter/trigger
+OneDrive_1_2023-8-30.zip
+*.tar
+*wandb*
+events*
