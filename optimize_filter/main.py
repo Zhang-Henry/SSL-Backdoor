@@ -2,7 +2,6 @@ import argparse,torch,random,os
 import numpy as np
 from data_loader import create_data_loader
 from solver import Solver
-from solver_ab import Solver_ab
 
 def seed_torch(seed=1029):
     random.seed(seed)
@@ -41,14 +40,16 @@ if __name__ == '__main__':
     parser.add_argument('--init_cost2', type=float, default=1)
     parser.add_argument('--cost_multiplier_up', type=float, default=1.5**1.5)
     parser.add_argument('--cost_multiplier_down', type=float, default=1.5)
-    parser.add_argument('--gpu', default='0', type=str, help='the index of gpu used to train the model')
+    parser.add_argument('--gpu', default=0, type=int, help='the index of gpu used to train the model')
 
     parser.add_argument('--ablation', type=bool, default=False)
     parser.add_argument('--num', type=float, default=0.05)
+    parser.add_argument('--use_feature', action='store_true',help='use feature or not')
+    parser.add_argument('--resume', type=str)
 
     args = parser.parse_args()
     print(args)
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
     print('Loading data...')
     train_loader = create_data_loader(args)

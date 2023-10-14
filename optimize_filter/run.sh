@@ -11,18 +11,35 @@ timestamp=$(date +"%Y-%m-%d-%H-%M-%S")
 
 # CUDA_VISIBLE_DEVICES=1 nohup python main.py --timestamp $timestamp > logs/moco/filter_unet_wd_$timestamp.log 2>&1 &
 
+# nohup python main.py \
+#     --timestamp $timestamp \
+#     --gpu 0 \
+#     --batch_size 32 \
+#     --ssim_threshold 0.65 \
+#     --n_epoch 100 \
+#     --step_size 50 \
+#     --patience 5 \
+#     --init_cost 0.0001 \
+#     --cost_multiplier_up 1.15 \
+#     --cost_multiplier_down 1.25 \
+#     > logs/moco/filter_AttU_Net_wd_lpips_$timestamp.log 2>&1 &
+
 nohup python main.py \
     --timestamp $timestamp \
-    --gpu 4 \
-    --batch_size 38 \
-    --ssim_threshold 0.70 \
+    --gpu 3 \
+    --batch_size 16 \
+    --ssim_threshold 0.80 \
     --n_epoch 100 \
     --step_size 50 \
     --patience 5 \
-    --init_cost 0.0001 \
-    --cost_multiplier_up 1.25 \
-    --cost_multiplier_down 1.5 \
-    > logs/moco/filter_AttU_Net_wd_lpips_$timestamp.log 2>&1 &
+    --init_cost 1.8 \
+    --cost_multiplier_up 1.5 \
+    --cost_multiplier_down 1.25 \
+    --use_feature \
+    --resume trigger/moco/2023-10-14-10-50-09/ssim0.8006_wd2.491.pt \
+    > logs/moco/filter_AttU_Net_wd_lpips_feature_$timestamp.log 2>&1 &
+
+
 
 # nohup python main.py \
 #     --ablation True \

@@ -2,28 +2,21 @@
     "version": "0.2.0",
     "configurations": [
 
-
         {
             "name": "optimize",
             "type": "python",
             "request": "launch",
-            "program": "/home/hrzhang/projects/SSL-Backdoor/optimize_filter/optimize_filter.py",
-            "console": "integratedTerminal",
-            "env": {
-                "CUDA_VISIBLE_DEVICES": "2"
-            },
-            "justMyCode": true
-        },
-        {
-            "name": "optimize-unet-w",
-            "type": "python",
-            "request": "launch",
             "program": "/home/hrzhang/projects/SSL-Backdoor/optimize_filter/main.py",
             "console": "integratedTerminal",
+            "args": [
+                "--use_feature",
+                "--gpu","2"
+            ],
             "env": {
                 "CUDA_VISIBLE_DEVICES": "2"
             },
-            "justMyCode": true
+            "justMyCode": true,
+            "cwd": "${fileDirname}",
         },
         {
             "name": "rotnet",
