@@ -19,9 +19,10 @@ import lpips
 from network import U_Net,R2AttU_Net,R2U_Net,AttU_Net
 from data_loader import aug
 from moco.builder import MoCo
+from torchvision import models
 from torchvision.models import resnet50, ResNet50_Weights,vit_l_16,ViT_L_16_Weights
 import torch.nn.functional as F
-
+from collections import OrderedDict
 
 class Solver():
     def __init__(self, args, train_loader):
@@ -43,20 +44,30 @@ class Solver():
         self.loss_mmd = MMD_loss()
         self.WD=SinkhornDistance(eps=0.1, max_iter=100)
         # self.backbone=resnet50(weights=ResNet50_Weights.IMAGENET1K_V2).to(self.device).eval()
-        self.backbone=vit_l_16(weights=ViT_L_16_Weights.IMAGENET1K_SWAG_LINEAR_V1).to(self.device).eval()
+        # self.backbone=vit_l_16(weights=ViT_L_16_Weights.IMAGENET1K_SWAG_LINEAR_V1).to(self.device).eval()
 
-        # moco=MoCo(
+        # self.moco=MoCo(
         #     models.__dict__['resnet18'],
         #     128, 65536, 0.999,
         #     contr_tau=0.2,
         #     align_alpha=None,
         #     unif_t=None,
         #     unif_intra_batch=True,
-        #     mlp=True)
-        # moco=moco.to(self.device)
-        # checkpoint = torch.load('../moco/save/custom_imagenet_n02106550/mocom0.999_contr1tau0.2_mlp_aug+_cos_b256_lr0.06_e120,160,200/checkpoint_0199.pth.tar', map_location=torch.device('cuda:0'))
+        #     mlp=True).to(self.device)
 
-        # self.moco=moco.load_state_dict(checkpoint['state_dict'])
+        # checkpoint = torch.load('../moco/save/custom_imagenet_n02106550/mocom0.999_contr1tau0.2_mlp_aug+_cos_b256_lr0.06_e120,160,200/checkpoint_0199.pth.tar', map_location=torch.device('cuda:0'))
+        # state_dict =checkpoint['state_dict']
+
+        # new_state_dict = OrderedDict()
+
+        # for k, v in state_dict.items():
+        #     if 'module' in k:
+        #         k = k.split('.')[1:]
+        #         k = '.'.join(k)
+        #     new_state_dict[k]=v
+
+        # self.moco.load_state_dict(new_state_dict)
+        # self.backbone=self.moco.encoder_q
 
 
     def train(self,args):
@@ -85,11 +96,12 @@ class Solver():
                 aug_filter_img=aug_filter_img.cuda()
 
                 if args.use_feature:
-                    filter_img_feature=self.backbone(filter_img)
+                    filter_img_feature = self.backbone(filter_img)
                     filter_img_feature = F.normalize(filter_img_feature, dim=1)
-                    aug_filter_img_feature=self.backbone(aug_filter_img)
+                    aug_filter_img_feature = self.backbone(aug_filter_img)
                     aug_filter_img_feature = F.normalize(aug_filter_img_feature, dim=1)
-                    wd,_,_=self.WD(filter_img_feature,aug_filter_img_feature) # wd越小越相似
+                    wd_f,_,_=self.WD(filter_img_feature,aug_filter_img_feature) # wd越小越相似
+                    wd_p,_,_=self.WD(filter_img.view(aug_filter_img.shape[0],-1),aug_filter_img.view(aug_filter_img.shape[0],-1))
                 else:
                     wd,_,_=self.WD(filter_img.view(aug_filter_img.shape[0],-1),aug_filter_img.view(aug_filter_img.shape[0],-1)) # wd越小越相似
 
@@ -105,12 +117,15 @@ class Solver():
                 d_list = self.loss_fn(filter_img,img)
                 lp_loss=d_list.squeeze()
 
+                # wd = 0.0002 * wd_p + wd_f # wd_pixel wd_feature
+
+                # wd = wd_f
                 ############################ wd ############################
                 if args.ablation:
                     loss = recorder.cost * loss_mse + 1 - loss_ssim + recorder.cost * lp_loss.mean()
                 ############################ wd ############################
                 else:
-                    loss = 5 * loss_mse + 1 - loss_ssim + 5 * lp_loss.mean() - recorder.cost * wd
+                    loss = 10 * loss_mse + 1 - loss_ssim + 10 * lp_loss.mean() - recorder.cost * wd
                     # loss = 0.00001 * loss_mse + 1 - loss_ssim
 
                 ############################ cmd ############################
@@ -186,7 +201,10 @@ class Solver():
 
 
             # bar.set_description(f"Loss: {avg_loss}, lr: {optimizer.param_groups[0]['lr']}, SSIM1: {loss_ssim1.item()}, MSE1: {loss_mse1.item()}, SSIM2: {loss_ssim2.item()}, MSE2: {loss_mse2.item()}")
-            bar.set_description(f"Loss: {avg_loss}, lr: {self.optimizer.param_groups[0]['lr']}, WD: {wd}, SSIM: {ssim}, MSE: {mse}, cost:{recorder.cost}, lp_loss:{lp_loss.mean()}")
+            if args.use_feature:
+                bar.set_description(f"Loss: {avg_loss}, lr: {self.optimizer.param_groups[0]['lr']}, WD: {wd}, WD_f:{wd_f}, WD_p:{wd_p}, SSIM: {ssim}, MSE: {mse}, cost:{recorder.cost}, lp_loss:{lp_loss.mean()}")
+            else:
+                bar.set_description(f"Loss: {avg_loss}, lr: {self.optimizer.param_groups[0]['lr']}, WD: {wd}, SSIM: {ssim}, MSE: {mse}, cost:{recorder.cost}, lp_loss:{lp_loss.mean()}")
 
             # bar.set_description(f"Loss: {avg_loss}, lr: {optimizer.param_groups[0]['lr']}, mmd: {cmd}, SSIM2: {ssim2}, MSE2: {mse2}")
             # bar.set_description(f"Loss: {avg_loss}, lr: {optimizer.param_groups[0]['lr']}, lp_loss: {lp_loss}, SSIM2: {ssim2}, MSE2: {mse2}")

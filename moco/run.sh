@@ -137,7 +137,7 @@
 #### customized imagenet filter unet
 
 
-# CUDA_VISIBLE_DEVICES=1,2,4,5 nohup python main_moco.py \
+# CUDA_VISIBLE_DEVICES=0,1,4,5 nohup python main_moco.py \
 #                         -a resnet18 \
 #                         --lr 0.06 --batch-size 1024 --multiprocessing-distributed \
 #                         --world-size 1 --rank 0 --aug-plus --mlp --cos --moco-align-w 0 \
@@ -148,9 +148,9 @@
 #                         > logs/train_cus_imagenet_unet.log  2>&1 &
 
 
-# CUDA_VISIBLE_DEVICES=1 nohup python eval_linear.py \
+# CUDA_VISIBLE_DEVICES=3 nohup python eval_linear.py \
 #                         --arch moco_resnet18 \
-#                         --weights save/custom_imagenet_unet_n02106550/mocom0.999_contr1tau0.2_mlp_aug+_cos_b1024_lr0.06_e120,160,200/checkpoint_0199.pth.tar \
+#                         --weights save/custom_imagenet_unet_n02106550/mocom0.999_contr1tau0.2_mlp_aug+_cos_b1024_lr0.06_e120,160,200/checkpoint_0163.pth.tar \
 #                         --train_file ../poison-generation/data/custom_imagenet_unet/train/rate_1.00_targeted_True_filelist.txt \
 #                         --val_file ../poison-generation/data/custom_imagenet_unet/val_poisoned/filelist.txt \
 #                         --batch-size 2048 \
@@ -159,10 +159,10 @@
 
 CUDA_VISIBLE_DEVICES=1 nohup python eval_linear.py \
                         --arch moco_resnet18 \
-                        --weights save/custom_imagenet_unet_n02106550/mocom0.999_contr1tau0.2_mlp_aug+_cos_b1024_lr0.06_e120,160,200/checkpoint_0199.pth.tar \
+                        --weights save/custom_imagenet_unet_n02106550/mocom0.999_contr1tau0.2_mlp_aug+_cos_b1024_lr0.06_e120,160,200/checkpoint_0163.pth.tar \
                         --val_file ../poison-generation/data/clean/val/clean_filelist.txt \
                         --val_poisoned_file ../poison-generation/data/custom_imagenet_unet/val_poisoned/filelist.txt \
-                        --resume save/custom_imagenet_unet_n02106550/mocom0.999_contr1tau0.2_mlp_aug+_cos_b1024_lr0.06_e120,160,200/linear/checkpoint_0199.pth.tar/model_best.pth.tar \
+                        --resume save/custom_imagenet_unet_n02106550/mocom0.999_contr1tau0.2_mlp_aug+_cos_b1024_lr0.06_e120,160,200/linear/checkpoint_0163.pth.tar/model_best.pth.tar \
                         --evaluate --eval_data evaluation-custom_imagenet_unet-n02106550 \
                         --load_cache \
                         > logs/eval_classifier_cus_imagenet_unet.log  2>&1 &

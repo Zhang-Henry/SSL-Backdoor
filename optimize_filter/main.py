@@ -21,6 +21,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--timestamp', type=str)
+    parser.add_argument('--ssim_threshold', type=float, default=0.95)
 
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--n_epoch', type=int, default=100)
@@ -34,7 +35,6 @@ if __name__ == '__main__':
     parser.add_argument('--epsilon', type=float, default=1e-8)
     parser.add_argument('--num_workers', type=int, default=2)
 
-    parser.add_argument('--ssim_threshold', type=float, default=0.95)
     parser.add_argument('--patience', type=int, default=5)
     parser.add_argument('--init_cost', type=float, default=1e-5)
     parser.add_argument('--init_cost2', type=float, default=1)
