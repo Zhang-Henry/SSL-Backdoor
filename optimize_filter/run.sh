@@ -11,32 +11,33 @@ timestamp=$(date +"%Y-%m-%d-%H-%M-%S")
 
 # CUDA_VISIBLE_DEVICES=1 nohup python main.py --timestamp $timestamp > logs/moco/filter_unet_wd_$timestamp.log 2>&1 &
 
-nohup python main.py \
-    --timestamp $timestamp \
-    --gpu 1 \
-    --batch_size 38 \
-    --ssim_threshold 0.75 \
-    --n_epoch 300 \
-    --step_size 50 \
-    --patience 5 \
-    --init_cost 0.0001 \
-    --cost_multiplier_up 1.25 \
-    --cost_multiplier_down 1.2 \
-    > logs/moco/filter_AttU_Net_wd_lpips_$timestamp.log 2>&1 &
-
 # nohup python main.py \
 #     --timestamp $timestamp \
-#     --gpu 5 \
-#     --batch_size 46 \
-#     --ssim_threshold 0.80 \
-#     --n_epoch 100 \
+#     --gpu 1 \
+#     --batch_size 38 \
+#     --ssim_threshold 0.75 \
+#     --n_epoch 300 \
 #     --step_size 50 \
 #     --patience 5 \
-#     --init_cost 3 \
+#     --init_cost 0.0001 \
 #     --cost_multiplier_up 1.25 \
-#     --cost_multiplier_down 1.5 \
-#     --use_feature \
-#     > logs/moco/filter_AttU_Net_f_$timestamp.log 2>&1 &
+#     --cost_multiplier_down 1.2 \
+#     > logs/moco/filter_AttU_Net_wd_lpips_$timestamp.log 2>&1 &
+
+nohup python main.py \
+    --timestamp $timestamp \
+    --lr 0.00003 \
+    --gpu 5 \
+    --batch_size 45 \
+    --ssim_threshold 0.78 \
+    --n_epoch 100 \
+    --step_size 50 \
+    --patience 5 \
+    --init_cost 5 \
+    --cost_multiplier_up 1.2 \
+    --cost_multiplier_down 2 \
+    --use_feature \
+    > logs/moco/filter_AttU_Net_psnr_featurewd_$timestamp.log 2>&1 &
 
 
 

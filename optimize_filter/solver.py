@@ -20,9 +20,10 @@ from network import U_Net,R2AttU_Net,R2U_Net,AttU_Net
 from data_loader import aug
 from moco.builder import MoCo
 from torchvision import models
-from torchvision.models import resnet50, ResNet50_Weights,vit_l_16,ViT_L_16_Weights
+from torchvision.models import resnet50, ResNet50_Weights,vit_l_16,ViT_L_16_Weights,vit_b_16,ViT_B_16_Weights
 import torch.nn.functional as F
 from collections import OrderedDict
+from torchmetrics.image import PeakSignalNoiseRatio
 
 class Solver():
     def __init__(self, args, train_loader):
@@ -43,31 +44,32 @@ class Solver():
         self.loss_fn = lpips.LPIPS(net='alex').to(self.device)
         self.loss_mmd = MMD_loss()
         self.WD=SinkhornDistance(eps=0.1, max_iter=100)
+        self.psnr = PeakSignalNoiseRatio().to(self.device)
         # self.backbone=resnet50(weights=ResNet50_Weights.IMAGENET1K_V2).to(self.device).eval()
-        # self.backbone=vit_l_16(weights=ViT_L_16_Weights.IMAGENET1K_SWAG_LINEAR_V1).to(self.device).eval()
+        # self.backbone=vit_b_16(weights=ViT_B_16_Weights.IMAGENET1K_SWAG_E2E_V1).to(self.device).eval()
 
-        # self.moco=MoCo(
-        #     models.__dict__['resnet18'],
-        #     128, 65536, 0.999,
-        #     contr_tau=0.2,
-        #     align_alpha=None,
-        #     unif_t=None,
-        #     unif_intra_batch=True,
-        #     mlp=True).to(self.device)
+        self.moco=MoCo(
+            models.__dict__['resnet18'],
+            128, 65536, 0.999,
+            contr_tau=0.2,
+            align_alpha=None,
+            unif_t=None,
+            unif_intra_batch=True,
+            mlp=True).to(self.device)
 
-        # checkpoint = torch.load('../moco/save/custom_imagenet_n02106550/mocom0.999_contr1tau0.2_mlp_aug+_cos_b256_lr0.06_e120,160,200/checkpoint_0199.pth.tar', map_location=torch.device('cuda:0'))
-        # state_dict =checkpoint['state_dict']
+        checkpoint = torch.load('../moco/save/custom_imagenet_n02106550/mocom0.999_contr1tau0.2_mlp_aug+_cos_b256_lr0.06_e120,160,200/checkpoint_0199.pth.tar', map_location=torch.device('cuda:0'))
+        state_dict =checkpoint['state_dict']
 
-        # new_state_dict = OrderedDict()
+        new_state_dict = OrderedDict()
 
-        # for k, v in state_dict.items():
-        #     if 'module' in k:
-        #         k = k.split('.')[1:]
-        #         k = '.'.join(k)
-        #     new_state_dict[k]=v
+        for k, v in state_dict.items():
+            if 'module' in k:
+                k = k.split('.')[1:]
+                k = '.'.join(k)
+            new_state_dict[k]=v
 
-        # self.moco.load_state_dict(new_state_dict)
-        # self.backbone=self.moco.encoder_q
+        self.moco.load_state_dict(new_state_dict)
+        self.backbone=self.moco.encoder_q
 
 
     def train(self,args):
@@ -77,7 +79,7 @@ class Solver():
         recorder=Recorder(args)
 
         for _ in bar:
-            total_loss,total_wd,total_ssim,total_mse = [],[],[],[]
+            total_loss,total_wd,total_ssim,total_sim,total_psnr,total_lp, total_far = [],[],[],[],[],[],[]
 
             for img in self.train_loader:
                 img = img.to(self.device)
@@ -100,7 +102,7 @@ class Solver():
                     filter_img_feature = F.normalize(filter_img_feature, dim=1)
                     aug_filter_img_feature = self.backbone(aug_filter_img)
                     aug_filter_img_feature = F.normalize(aug_filter_img_feature, dim=1)
-                    wd_f,_,_=self.WD(filter_img_feature,aug_filter_img_feature) # wd越小越相似
+                    wd,_,_=self.WD(filter_img_feature,aug_filter_img_feature) # wd越小越相似
                     wd_p,_,_=self.WD(filter_img.view(aug_filter_img.shape[0],-1),aug_filter_img.view(aug_filter_img.shape[0],-1))
                 else:
                     wd,_,_=self.WD(filter_img.view(aug_filter_img.shape[0],-1),aug_filter_img.view(aug_filter_img.shape[0],-1)) # wd越小越相似
@@ -112,20 +114,25 @@ class Solver():
 
                 # filter后的图片和原图的mse和ssim，差距要尽可能小
                 loss_mse = self.mse(filter_img, img)
+                loss_psnr = self.psnr(filter_img, img)
                 loss_ssim = self.ssim(filter_img, img)
+
 
                 d_list = self.loss_fn(filter_img,img)
                 lp_loss=d_list.squeeze()
 
                 # wd = 0.0002 * wd_p + wd_f # wd_pixel wd_feature
 
-                # wd = wd_f
                 ############################ wd ############################
                 if args.ablation:
                     loss = recorder.cost * loss_mse + 1 - loss_ssim + recorder.cost * lp_loss.mean()
                 ############################ wd ############################
                 else:
-                    loss = 10 * loss_mse + 1 - loss_ssim + 10 * lp_loss.mean() - recorder.cost * wd
+                    loss_sim = 1 - loss_ssim + 10 * lp_loss.mean() - 0.05 * loss_psnr
+                    loss_far = - recorder.cost * wd
+                    loss = loss_sim + loss_far
+
+                    # loss = 10 * loss_mse + 1 - loss_ssim + 10 * lp_loss.mean() - recorder.cost * wd
                     # loss = 0.00001 * loss_mse + 1 - loss_ssim
 
                 ############################ cmd ############################
@@ -147,25 +154,33 @@ class Solver():
                 self.optimizer.step()
                 total_loss.append(loss.item())
                 total_ssim.append(loss_ssim.item())
-                total_mse.append(loss_mse.item())
+                total_sim.append(loss_sim.item())
                 total_wd.append(wd.item())
+                total_psnr.append(loss_psnr.item())
+                total_lp.append(lp_loss.mean().item())
+                total_far.append(loss_far.item())
 
             self.scheduler.step()
             # 计算平均损失
             size=len(self.train_loader)
             avg_loss=sum(total_loss)/size
             wd=sum(total_wd)/size
-            mse=sum(total_mse)/size
+            sim=sum(total_sim)/size
             ssim=sum(total_ssim)/size
+            psnr=sum(total_psnr)/size
+            lp=sum(total_lp)/size
+            far=sum(total_far)/size
 
             # torch.save(self.net, f'trigger/moco/{self.args.timestamp}/ssim{ssim:.4f}_wd{wd:.1f}.pt')
             if ssim >= args.ssim_threshold and wd >= recorder.best:
-                torch.save(self.net, f'trigger/moco/{self.args.timestamp}/ssim{ssim:.4f}_wd{wd:.3f}.pt')
+                torch.save(self.net, f'trigger/moco/{self.args.timestamp}/ssim{ssim:.4f}_psnr{psnr:.2f}_wd{wd:.3f}.pt')
 
                 recorder.best = wd
                 print('\n--------------------------------------------------')
-                print(f"Updated !!! Best SSIM: {ssim}, Best WD: {wd}")
+                print(f"Updated !!! Best sim:{sim}, far:{far}, SSIM: {ssim}, psnr: {psnr}, lp: {lp}, Best WD: {wd}")
                 print('--------------------------------------------------')
+                recorder.cost_up_counter = 0
+                recorder.cost_down_counter = 0
 
 
             if recorder.cost == 0 and ssim >= args.ssim_threshold and wd >= recorder.best:
@@ -200,20 +215,10 @@ class Solver():
                 recorder.cost_down_flag = True
 
 
-            # bar.set_description(f"Loss: {avg_loss}, lr: {optimizer.param_groups[0]['lr']}, SSIM1: {loss_ssim1.item()}, MSE1: {loss_mse1.item()}, SSIM2: {loss_ssim2.item()}, MSE2: {loss_mse2.item()}")
             if args.use_feature:
-                bar.set_description(f"Loss: {avg_loss}, lr: {self.optimizer.param_groups[0]['lr']}, WD: {wd}, WD_f:{wd_f}, WD_p:{wd_p}, SSIM: {ssim}, MSE: {mse}, cost:{recorder.cost}, lp_loss:{lp_loss.mean()}")
+                bar.set_description(f"Loss: {avg_loss}, lr: {self.optimizer.param_groups[0]['lr']}, SIM: {sim}, far:{far}, WD: {wd}, WD_p:{wd_p}, SSIM: {ssim}, pnsr:{psnr}, lp_loss:{lp_loss.mean()},  cost:{recorder.cost}")
             else:
-                bar.set_description(f"Loss: {avg_loss}, lr: {self.optimizer.param_groups[0]['lr']}, WD: {wd}, SSIM: {ssim}, MSE: {mse}, cost:{recorder.cost}, lp_loss:{lp_loss.mean()}")
-
-            # bar.set_description(f"Loss: {avg_loss}, lr: {optimizer.param_groups[0]['lr']}, mmd: {cmd}, SSIM2: {ssim2}, MSE2: {mse2}")
-            # bar.set_description(f"Loss: {avg_loss}, lr: {optimizer.param_groups[0]['lr']}, lp_loss: {lp_loss}, SSIM2: {ssim2}, MSE2: {mse2}")
-
-            # self.save()
-
-    # def save(self):
-    #     torch.save(self.net, f'trigger/moco/unet_{self.args.timestamp}.pt')
-
+                bar.set_description(f"Loss: {avg_loss}, lr: {self.optimizer.param_groups[0]['lr']}, SIM: {sim}, far:{far}, WD: {wd},  SSIM: {ssim}, cost:{recorder.cost}, lp_loss:{lp_loss.mean()}")
 
 
 

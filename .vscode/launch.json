@@ -9,7 +9,7 @@
             "program": "/home/hrzhang/projects/SSL-Backdoor/optimize_filter/main.py",
             "console": "integratedTerminal",
             "args": [
-                "--use_feature",
+                // "--use_feature",
                 "--gpu","2"
             ],
             "env": {
