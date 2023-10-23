@@ -2,6 +2,7 @@ import argparse,torch,random,os
 import numpy as np
 from data_loader import create_data_loader
 from solver import Solver
+from datetime import datetime
 
 def seed_torch(seed=1029):
     random.seed(seed)
@@ -18,10 +19,16 @@ def seed_torch(seed=1029):
 
 if __name__ == '__main__':
     # seed_torch()
+    now = datetime.now()
+    formatted_time = now.strftime("%Y-%m-%d %H:%M:%S")
+
+    print("Start Time:", formatted_time)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--timestamp', type=str)
     parser.add_argument('--ssim_threshold', type=float, default=0.95)
+    parser.add_argument('--psnr_threshold', type=float, default=30.0)
+    parser.add_argument('--lp_threshold', type=float, default=0.003)
 
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--n_epoch', type=int, default=100)

@@ -17,8 +17,9 @@
 |  ssim0.9405_wd234999.9_norm_lp | ||729||
 |  ssim0.7970_wd2.29_lp_f (resnet) | ||337||
 |  ssim0.8012_wd1.647_f (moco) | ||2283||
-|  ssim0.8059_psnr21.73_wd0.423_psnr_f (moco) | ||2726||
-|  ssim0.8176_psnr24.25_wd0.531_psnr_f (moco) | ||3003||
+|  ssim0.8059_psnr21.73_wd0.423_f (moco) | ||2726||
+|  ssim0.8176_psnr24.25_wd0.531_f (moco) | ||3003||
+|  ssim0.9249_psnr29.11_wd3.094_f (moco) | ||84||
 
 ---
 

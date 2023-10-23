@@ -4,7 +4,7 @@ from collections import defaultdict
 
 # 读取原始txt文件并分组
 data_path = 'train/clean_filelist.txt'
-output_path = 'train/clean_filelist_5subset.txt'
+output_path = 'train/clean_filelist_3subset.txt'
 category_images = defaultdict(list)
 
 with open(data_path, 'r') as file:
@@ -16,7 +16,7 @@ with open(data_path, 'r') as file:
 selected_images = []
 for category, images in category_images.items():
     num_images = len(images)
-    num_selected = int(num_images * 0.05)
+    num_selected = int(num_images * 0.03)
     selected_images.extend(random.sample(images, num_selected))
 
 # 将选中的图片路径写入新的文件

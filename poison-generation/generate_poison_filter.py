@@ -28,7 +28,7 @@ import torchvision.transforms as transforms
 import torch.nn.functional as F
 import pilgram
 # from skimage import img_as_ubyte
-from optimize_filter.network import U_Net
+from optimize_filter.network import AttU_Net
 
 config = configparser.ConfigParser()
 config.read(sys.argv[1])
@@ -142,7 +142,6 @@ def add_watermark(net,input_image_path,val=False):
     # unet = U_Net(img_ch=3,output_ch=3)
 
     unet=net.cuda()
-
     img=base_image.cuda()
     # if hasattr(unet, 'sig'):  # 假设最后一层被命名为 'fc_layer'
     #     delattr(unet, 'sig')
@@ -152,8 +151,8 @@ def add_watermark(net,input_image_path,val=False):
 
     # img_backdoor = np.clip(img_backdoor, -3, 3) #限制颜色范围在0-1
 
-    sig = nn.Sigmoid()
-    img_backdoor = sig(img_backdoor)
+    # sig = nn.Sigmoid()
+    # img_backdoor = sig(img_backdoor)
 
     scaled_image = (img_backdoor.cpu().detach().numpy() * 255).astype(np.uint8)
     img_backdoor = Image.fromarray(np.transpose(scaled_image,(1,2,0)))
@@ -170,7 +169,9 @@ def add_watermark(net,input_image_path,val=False):
 def generate_poison(class_list, source_path, poisoned_destination_path,
                   splits=['train', 'val', 'val_poisoned']):
 
-    unet = torch.load(trigger)
+    state_dict= torch.load(trigger)
+    unet = AttU_Net(img_ch=3,output_ch=3)
+    unet.load_state_dict(state_dict['model_state_dict'])
 
     # sort class list in lexical order
     class_list = sorted(class_list)

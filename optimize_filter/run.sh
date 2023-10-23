@@ -26,18 +26,20 @@ timestamp=$(date +"%Y-%m-%d-%H-%M-%S")
 
 nohup python main.py \
     --timestamp $timestamp \
-    --lr 0.00003 \
-    --gpu 5 \
-    --batch_size 45 \
-    --ssim_threshold 0.78 \
-    --n_epoch 100 \
+    --lr 0.05 \
+    --gpu 4 \
+    --batch_size 22 \
+    --ssim_threshold 0.80 \
+    --psnr_threshold 25.0 \
+    --lp_threshold 0.1 \
+    --n_epoch 150 \
     --step_size 50 \
     --patience 5 \
-    --init_cost 5 \
-    --cost_multiplier_up 1.2 \
-    --cost_multiplier_down 2 \
+    --init_cost 2 \
+    --cost_multiplier_up 2 \
+    --cost_multiplier_down 2.5 \
     --use_feature \
-    > logs/moco/filter_AttU_Net_psnr_featurewd_$timestamp.log 2>&1 &
+    > logs/moco/filter_swin_$timestamp.log 2>&1 &
 
 
 
