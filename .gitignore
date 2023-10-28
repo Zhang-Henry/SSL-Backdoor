@@ -134,5 +134,6 @@ dmypy.json
 optimize_filter/trigger
 OneDrive_1_2023-8-30.zip
 *.tar
+*.pth
 *wandb*
 events*

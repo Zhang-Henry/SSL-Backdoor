@@ -19,7 +19,11 @@
 |  ssim0.8012_wd1.647_f (moco) | ||2283||
 |  ssim0.8059_psnr21.73_wd0.423_f (moco) | ||2726||
 |  ssim0.8176_psnr24.25_wd0.531_f (moco) | ||3003||
-|  ssim0.9249_psnr29.11_wd3.094_f (moco) | ||84||
+|  ssim0.9249_psnr29.11_wd3.094_f (swin transformer) | ||84||
+|  ssim0.8862_psnr25.24_lp0.0074_wd2.500 (swin transformer) | ||63||
+|  ssim0.9204_psnr25.10_lp0.0427_wd0.381 (simclr) | ||131||
+|  ssim0.8167_psnr23.66_lp0.0412_wd1.479 (moco pretrained by others) | ||617||
+
 
 ---
 

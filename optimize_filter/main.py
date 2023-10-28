@@ -1,7 +1,8 @@
 import argparse,torch,random,os
 import numpy as np
-from data_loader import create_data_loader
+from data_loader import create_data_loader, create_finetune_dataloader
 from solver import Solver
+from finetune import Finetuner
 from datetime import datetime
 
 def seed_torch(seed=1029):
@@ -53,15 +54,22 @@ if __name__ == '__main__':
     parser.add_argument('--num', type=float, default=0.05)
     parser.add_argument('--use_feature', action='store_true',help='use feature or not')
     parser.add_argument('--resume', type=str)
+    parser.add_argument('--mode', type=str,choices=['train_filter','finetune_backbone'],default='train_filter')
 
     args = parser.parse_args()
     print(args)
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
     print('Loading data...')
-    train_loader = create_data_loader(args)
-    os.makedirs(f'trigger/moco/{args.timestamp}',exist_ok=True)
-    solver=Solver(args,train_loader)
-    # solver=Solver_ab(args,train_loader)
-    solver.train(args)
+    if args.mode == 'train_filter':
+        train_loader = create_data_loader(args)
+        os.makedirs(f'trigger/moco/{args.timestamp}',exist_ok=True)
+        solver=Solver(args,train_loader)
+        # solver=Solver_ab(args,train_loader)
+        solver.train(args)
 
+    elif args.mode == 'finetune_backbone':
+        train_loader,val_loader,test_loader = create_finetune_dataloader(args)
+
+        finetuner=Finetuner(args)
+        finetuner.train(args,train_loader,val_loader,test_loader)

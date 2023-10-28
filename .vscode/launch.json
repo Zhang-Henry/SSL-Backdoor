@@ -1,7 +1,49 @@
 {
     "version": "0.2.0",
     "configurations": [
-
+        {
+            "name": "moco",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/hrzhang/projects/SSL-Backdoor/moco/main_moco.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${fileDirname}",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "1,2"
+            },
+            "args": [
+                "-a",
+                "resnet18",
+                "--lr",
+                "0.06",
+                "--batch-size",
+                "256",
+                "--multiprocessing-distributed",
+                "--world-size",
+                "1",
+                "--rank",
+                "0",
+                "--aug-plus",
+                "--mlp",
+                "--cos",
+                "--moco-align-w",
+                "0",
+                "--moco-unif-w",
+                "0",
+                "--moco-contr-w",
+                "1",
+                "--moco-contr-tau",
+                "0.2",
+                "--dist-url",
+                "tcp://localhost:10005",
+                "--save-folder-root",
+                "save/",
+                "--experiment-id",
+                "custom_imagenet_unet_n02106550",
+                "../poison-generation/data/custom_imagenet_unet/train/rate_1.00_targeted_True_filelist.txt"
+            ],
+        },
         {
             "name": "optimize",
             "type": "python",
@@ -9,11 +51,12 @@
             "program": "/home/hrzhang/projects/SSL-Backdoor/optimize_filter/main.py",
             "console": "integratedTerminal",
             "args": [
-                // "--use_feature",
-                "--gpu","2"
+                "--use_feature",
+                "--gpu",
+                "0"
             ],
             "env": {
-                "CUDA_VISIBLE_DEVICES": "2"
+                "CUDA_VISIBLE_DEVICES": "0"
             },
             "justMyCode": true,
             "cwd": "${fileDirname}",
@@ -95,8 +138,10 @@
                 "../poison-generation/data/custom_imagenet_unet/train/rate_1.00_targeted_True_filelist.txt",
                 "--val_file",
                 "../poison-generation/data/custom_imagenet_unet/val_poisoned/filelist.txt",
-                "--save","save/custom_imagenet_unet",
-                "--b","512",
+                "--save",
+                "save/custom_imagenet_unet",
+                "--b",
+                "512",
             ],
             "env": {
                 "CUDA_VISIBLE_DEVICES": "2"

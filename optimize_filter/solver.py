@@ -19,16 +19,16 @@ from data_loader import aug
 from moco.builder import MoCo
 from collections import OrderedDict
 from torchmetrics.image import PeakSignalNoiseRatio
+from simclr_converter.resnet_wider import resnet50x1, resnet50x2, resnet50x4
+
 
 class Solver():
-    def __init__(self, args, train_loader):
+    def __init__(self, args):
         self.args = args
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.net = AttU_Net(img_ch=3,output_ch=3).to(self.device)
         self.optimizer = torch.optim.Adam(list(self.net.parameters()), lr=args.lr, betas=(args.beta1, args.beta2), eps=args.epsilon)
         self.scheduler = StepLR(self.optimizer, step_size=args.step_size, gamma=args.gamma)
-
-        self.train_loader = train_loader
 
         self.mse = MSELoss()
         self.ssim = SSIM()
@@ -40,9 +40,14 @@ class Solver():
         # self.backbone=resnet50(weights=ResNet50_Weights.IMAGENET1K_V2).to(self.device).eval()
         # self.backbone=vit_l_16(weights=ViT_L_16_Weights.IMAGENET1K_SWAG_LINEAR_V1).to(self.device).eval()
         # self.backbone=vit_b_16(weights=ViT_B_16_Weights.IMAGENET1K_SWAG_LINEAR_V1).to(self.device).eval()
-        self.backbone=swin_s(weights=Swin_S_Weights.IMAGENET1K_V1).to(self.device).eval()
-        self.backbone.head=Identity()
+        # self.backbone=swin_s(weights=Swin_S_Weights.IMAGENET1K_V1).to(self.device).eval()
+        # self.backbone.head=Identity()
 
+        # self.backbone = resnet50x2().to(self.device) # simclr
+        # sd = torch.load('../simclr_converter/resnet50-2x.pth', map_location=torch.device('cuda:0'))
+        # self.backbone.load_state_dict(sd['state_dict'])
+
+        ############# moco trained by myself #################
         # self.moco=MoCo(
         #     models.__dict__['resnet18'],
         #     128, 65536, 0.999,
@@ -50,7 +55,7 @@ class Solver():
         #     align_alpha=None,
         #     unif_t=None,
         #     unif_intra_batch=True,
-        #     mlp=True).to(self.device)
+        #     mlp=True).to(self.device) # moco trained by myself
 
         # checkpoint = torch.load('../moco/save/custom_imagenet_n02106550/mocom0.999_contr1tau0.2_mlp_aug+_cos_b256_lr0.06_e120,160,200/checkpoint_0199.pth.tar', map_location=torch.device('cuda:0'))
         # state_dict =checkpoint['state_dict']
@@ -66,8 +71,26 @@ class Solver():
         # self.moco.load_state_dict(new_state_dict)
         # self.backbone=self.moco.encoder_q
 
+        ############### moco pretrained https://github.com/facebookresearch/moco ##############
+        model = models.__dict__['resnet50']()
 
-    def train(self,args):
+        checkpoint = torch.load('/home/hrzhang/projects/SSL-Backdoor/moco/save/moco_v2_800ep_pretrain.pth.tar')
+        state_dict = checkpoint["state_dict"]
+
+        for k in list(state_dict.keys()):
+            # retain only encoder_q up to before the embedding layer
+            if k.startswith("module.encoder_q") and not k.startswith(
+                "module.encoder_q.fc"
+            ):
+                # remove prefix
+                state_dict[k[len("module.encoder_q.") :]] = state_dict[k]
+            # delete renamed or unused k
+            del state_dict[k]
+
+        model.load_state_dict(state_dict, strict=False)
+        self.backbone = model.to(self.device).eval()
+
+    def train(self,args,train_loader):
         print('Start training...')
 
         bar=tqdm(range(1, args.n_epoch+1))
@@ -82,13 +105,13 @@ class Solver():
             print(f"Resuming training from {args.resume}")
 
         for _ in bar:
-            self.train_one_epoch(args,recorder,bar,tracker)
+            self.train_one_epoch(args,recorder,bar,tracker,train_loader)
 
 
-    def train_one_epoch(self,args,recorder,bar,tracker):
+    def train_one_epoch(self,args,recorder,bar,tracker,train_loader):
         tracker.reset() # 重置损失记录器
 
-        for img in self.train_loader:
+        for img,label in train_loader:
             img = img.to(self.device)
 
             # 将滤镜作用在输入图像上
@@ -99,7 +122,7 @@ class Solver():
             aug_filter_img_list=[]
             for scale_img in scaled_images:
                 scaled_filter_img = Image.fromarray(np.transpose(scale_img,(1,2,0))).convert('RGB')
-                aug_filter_img_list.append(aug(scaled_filter_img))
+                aug_filter_img_list.append(aug(scaled_filter_img)) # 对backdoor图片进行transform
 
             aug_filter_img = torch.stack(aug_filter_img_list)
             aug_filter_img=aug_filter_img.cuda()
@@ -109,7 +132,7 @@ class Solver():
                 filter_img_feature = F.normalize(filter_img_feature, dim=1)
                 aug_filter_img_feature = self.backbone(aug_filter_img)
                 aug_filter_img_feature = F.normalize(aug_filter_img_feature, dim=1)
-                wd,_,_=self.WD(filter_img_feature,aug_filter_img_feature) # wd越小越相似
+                wd,_,_=self.WD(filter_img_feature,aug_filter_img_feature) # wd越小越相似，拉远backdoor img和transformed backdoor img的距离
                 # wd_p,_,_=self.WD(filter_img.view(aug_filter_img.shape[0],-1),aug_filter_img.view(aug_filter_img.shape[0],-1))
             else:
                 wd,_,_=self.WD(filter_img.view(aug_filter_img.shape[0],-1),aug_filter_img.view(aug_filter_img.shape[0],-1)) # wd越小越相似
@@ -134,7 +157,7 @@ class Solver():
             if args.ablation:
                 loss = recorder.cost * loss_mse + 1 - loss_ssim + recorder.cost * lp_loss.mean()
             else:
-                loss_sim = 1 - loss_ssim + 100 * lp_loss.mean() - 0.05 * loss_psnr + 100 * loss_mse
+                loss_sim = 1 - loss_ssim + 10 * lp_loss.mean() - 0.05 * loss_psnr
                 loss_far = - recorder.cost * wd
                 loss = loss_sim + loss_far
 
@@ -196,8 +219,3 @@ class Solver():
             bar.set_description(f"Loss: {avg_loss}, lr: {self.optimizer.param_groups[0]['lr']}, SIM: {sim}, far:{far}, WD: {wd}, SSIM: {ssim}, pnsr:{psnr}, lp:{lp},mse:{mse},  cost:{recorder.cost}")
         else:
             bar.set_description(f"Loss: {avg_loss}, lr: {self.optimizer.param_groups[0]['lr']}, SIM: {sim}, far:{far}, WD: {wd},  SSIM: {ssim}, cost:{recorder.cost}, lp:{lp.mean()}")
-
-
-
-
-
