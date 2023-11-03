@@ -11,6 +11,7 @@ import numpy as np
 from tqdm import tqdm
 from utils import *
 from data_loader import aug
+from simclr_converter.resnet_wider import resnet50x1, resnet50x2, resnet50x4
 
 
 
@@ -25,28 +26,28 @@ class Finetuner():
         # self.backbone=swin_s(weights=Swin_S_Weights.IMAGENET1K_V1).to(self.device).eval()
         # self.backbone.head=Identity()
 
-        # self.backbone = resnet50x2().to(self.device) # simclr
-        # sd = torch.load('../simclr_converter/resnet50-2x.pth', map_location=torch.device('cuda:0'))
-        # self.backbone.load_state_dict(sd['state_dict'])
+        self.backbone = resnet50x1().to(self.device) # simclr
+        sd = torch.load('../simclr_converter/resnet50-1x.pth', map_location=torch.device('cuda:0'))
+        self.backbone.load_state_dict(sd['state_dict'])
 
         ############### moco pretrained https://github.com/facebookresearch/moco ##############
-        model = models.__dict__['resnet50']()
+        # model = models.__dict__['resnet50']()
 
-        checkpoint = torch.load('/home/hrzhang/projects/SSL-Backdoor/moco/save/moco_v2_800ep_pretrain.pth.tar')
-        state_dict = checkpoint["state_dict"]
+        # checkpoint = torch.load('/home/hrzhang/projects/SSL-Backdoor/moco/save/moco_v2_800ep_pretrain.pth.tar')
+        # state_dict = checkpoint["state_dict"]
 
-        for k in list(state_dict.keys()):
-            # retain only encoder_q up to before the embedding layer
-            if k.startswith("module.encoder_q") and not k.startswith(
-                "module.encoder_q.fc"
-            ):
-                # remove prefix
-                state_dict[k[len("module.encoder_q.") :]] = state_dict[k]
-            # delete renamed or unused k
-            del state_dict[k]
+        # for k in list(state_dict.keys()):
+        #     # retain only encoder_q up to before the embedding layer
+        #     if k.startswith("module.encoder_q") and not k.startswith(
+        #         "module.encoder_q.fc"
+        #     ):
+        #         # remove prefix
+        #         state_dict[k[len("module.encoder_q.") :]] = state_dict[k]
+        #     # delete renamed or unused k
+        #     del state_dict[k]
 
-        model.load_state_dict(state_dict, strict=False)
-        self.backbone = model.to(self.device).eval()
+        # model.load_state_dict(state_dict, strict=False)
+        # self.backbone = model.to(self.device).eval()
 
 
     def train(self,args,train_loader,val_loader,test_loader):
@@ -55,18 +56,17 @@ class Finetuner():
             nn.ReLU(),
             nn.Linear(1024, 512),
             nn.ReLU(),
-            nn.Linear(512, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
+            nn.Linear(512, 100),
         )
         self.backbone = self.backbone.to(self.device)
 
-        for name, param in self.backbone.named_parameters():
-            if not name.startswith("fc"):
-                param.requires_grad = False
+        # for name, param in self.backbone.named_parameters():
+        #     if not name.startswith("fc"):
+        #         param.requires_grad = False
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(self.backbone.parameters(), lr=args.lr)
+        scheduler = StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
         bar=tqdm(range(1, args.n_epoch+1))
         for epoch in bar:
             # Training
@@ -81,6 +81,7 @@ class Finetuner():
                 loss.backward()
                 optimizer.step()
                 running_loss += loss.item()
+            scheduler.step()
 
             # Validation
             self.backbone.eval()
@@ -104,7 +105,7 @@ class Finetuner():
                 test_acc = self.evaluate(test_loader, criterion)
                 if test_acc > self.best_acc:
                     self.best_acc = test_acc
-                    torch.save(self.backbone.state_dict(), f'backbone/best_model_acc{self.best_acc:.2f}.pth')  # Save the dictionary
+                    torch.save(self.backbone, f'backbone/best_model_acc{self.best_acc:.2f}.pth')  # Save the dictionary
 
     def evaluate(self, test_loader, criterion):
         # Testing

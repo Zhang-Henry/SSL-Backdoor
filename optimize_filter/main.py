@@ -64,9 +64,9 @@ if __name__ == '__main__':
     if args.mode == 'train_filter':
         train_loader = create_data_loader(args)
         os.makedirs(f'trigger/moco/{args.timestamp}',exist_ok=True)
-        solver=Solver(args,train_loader)
+        solver=Solver(args)
         # solver=Solver_ab(args,train_loader)
-        solver.train(args)
+        solver.train(args,train_loader)
 
     elif args.mode == 'finetune_backbone':
         train_loader,val_loader,test_loader = create_finetune_dataloader(args)

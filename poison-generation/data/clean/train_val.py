@@ -20,9 +20,9 @@ with open(data_path, 'r') as file:
 # 选择每个类别中的20%的图片为训练集，5%的图片为验证集，10%的图片为测试集
 for category, images in category_images.items():
     num_images = len(images)
-    num_train = int(num_images * 0.2)
+    num_train = int(num_images * 0.5)
     num_val = int(num_images * 0.05)
-    num_test = int(num_images * 0.1)
+    num_test = int(num_images * 0.2)
     # 确保总的随机抽样数量不超过类别中的图像数量
     total_selected = min(num_train + num_val + num_test, num_images)
     selected_images = random.sample(images, total_selected)

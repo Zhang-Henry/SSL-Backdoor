@@ -6,9 +6,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 import torch,lpips
 from torch.optim.lr_scheduler import StepLR
 import torch.nn.functional as F
-from torch.nn import MSELoss,Identity
-from torchvision import models
-from torchvision.models import resnet50, ResNet50_Weights,vit_l_16,ViT_L_16_Weights,vit_b_16,ViT_B_16_Weights,swin_s,Swin_S_Weights
+from torch.nn import MSELoss
 import numpy as np
 from pytorch_ssim import SSIM
 from tqdm import tqdm
@@ -16,10 +14,7 @@ from PIL import Image
 from utils import *
 from network import U_Net,R2AttU_Net,R2U_Net,AttU_Net
 from data_loader import aug
-from moco.builder import MoCo
-from collections import OrderedDict
 from torchmetrics.image import PeakSignalNoiseRatio
-from simclr_converter.resnet_wider import resnet50x1, resnet50x2, resnet50x4
 
 
 class Solver():
@@ -35,60 +30,12 @@ class Solver():
         self.loss_cmd = CMD()
         self.loss_fn = lpips.LPIPS(net='alex').to(self.device)
         self.loss_mmd = MMD_loss()
-        self.WD=SinkhornDistance(eps=0.1, max_iter=100)
+        # self.WD=SinkhornDistance(eps=0.1, max_iter=100)
         self.psnr = PeakSignalNoiseRatio().to(self.device)
-        # self.backbone=resnet50(weights=ResNet50_Weights.IMAGENET1K_V2).to(self.device).eval()
-        # self.backbone=vit_l_16(weights=ViT_L_16_Weights.IMAGENET1K_SWAG_LINEAR_V1).to(self.device).eval()
-        # self.backbone=vit_b_16(weights=ViT_B_16_Weights.IMAGENET1K_SWAG_LINEAR_V1).to(self.device).eval()
-        # self.backbone=swin_s(weights=Swin_S_Weights.IMAGENET1K_V1).to(self.device).eval()
-        # self.backbone.head=Identity()
+        self.backbone = load_backbone()
+        self.backbone = self.backbone.to(self.device).eval()
+        print(self.backbone)
 
-        # self.backbone = resnet50x2().to(self.device) # simclr
-        # sd = torch.load('../simclr_converter/resnet50-2x.pth', map_location=torch.device('cuda:0'))
-        # self.backbone.load_state_dict(sd['state_dict'])
-
-        ############# moco trained by myself #################
-        # self.moco=MoCo(
-        #     models.__dict__['resnet18'],
-        #     128, 65536, 0.999,
-        #     contr_tau=0.2,
-        #     align_alpha=None,
-        #     unif_t=None,
-        #     unif_intra_batch=True,
-        #     mlp=True).to(self.device) # moco trained by myself
-
-        # checkpoint = torch.load('../moco/save/custom_imagenet_n02106550/mocom0.999_contr1tau0.2_mlp_aug+_cos_b256_lr0.06_e120,160,200/checkpoint_0199.pth.tar', map_location=torch.device('cuda:0'))
-        # state_dict =checkpoint['state_dict']
-
-        # new_state_dict = OrderedDict()
-
-        # for k, v in state_dict.items():
-        #     if 'module' in k:
-        #         k = k.split('.')[1:]
-        #         k = '.'.join(k)
-        #     new_state_dict[k]=v
-
-        # self.moco.load_state_dict(new_state_dict)
-        # self.backbone=self.moco.encoder_q
-
-        ############### moco pretrained https://github.com/facebookresearch/moco ##############
-        model = models.__dict__['resnet50']()
-
-        checkpoint = torch.load('/home/hrzhang/projects/SSL-Backdoor/moco/save/moco_v2_800ep_pretrain.pth.tar')
-        state_dict = checkpoint["state_dict"]
-
-        for k in list(state_dict.keys()):
-            # retain only encoder_q up to before the embedding layer
-            if k.startswith("module.encoder_q") and not k.startswith(
-                "module.encoder_q.fc"
-            ):
-                # remove prefix
-                state_dict[k[len("module.encoder_q.") :]] = state_dict[k]
-            # delete renamed or unused k
-            del state_dict[k]
-
-        model.load_state_dict(state_dict, strict=False)
-        self.backbone = model.to(self.device).eval()
 
     def train(self,args,train_loader):
         print('Start training...')
@@ -102,7 +49,7 @@ class Solver():
             self.net.load_state_dict(checkpoint['model_state_dict'])
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             recorder.best = checkpoint['best']
-            print(f"Resuming training from {args.resume}")
+            print(f"\nResuming training from {args.resume}")
 
         for _ in bar:
             self.train_one_epoch(args,recorder,bar,tracker,train_loader)
@@ -116,6 +63,7 @@ class Solver():
 
             # 将滤镜作用在输入图像上
             filter_img = self.net(img)
+            filter_img = torch.clamp(filter_img, min=0, max=1)
 
             # 将滤镜作用在backdoor的图像上
             scaled_images = (filter_img.cpu().detach().numpy() * 255).astype(np.uint8)
@@ -128,12 +76,17 @@ class Solver():
             aug_filter_img=aug_filter_img.cuda()
 
             if args.use_feature:
-                filter_img_feature = self.backbone(filter_img)
-                filter_img_feature = F.normalize(filter_img_feature, dim=1)
-                aug_filter_img_feature = self.backbone(aug_filter_img)
-                aug_filter_img_feature = F.normalize(aug_filter_img_feature, dim=1)
-                wd,_,_=self.WD(filter_img_feature,aug_filter_img_feature) # wd越小越相似，拉远backdoor img和transformed backdoor img的距离
-                # wd_p,_,_=self.WD(filter_img.view(aug_filter_img.shape[0],-1),aug_filter_img.view(aug_filter_img.shape[0],-1))
+                with torch.no_grad():
+                    filter_img_feature = self.backbone(filter_img)
+                    aug_filter_img_feature = self.backbone(aug_filter_img)
+
+                    # filter_img_feature = F.normalize(filter_img_feature, dim=1)
+                    # aug_filter_img_feature = F.normalize(aug_filter_img_feature, dim=1)
+                    # wd,_,_=self.WD(filter_img_feature,aug_filter_img_feature) # wd越小越相似，拉远backdoor img和transformed backdoor img的距离
+                    # wd = self.compute_style_loss(filter_img_feature,aug_filter_img_feature)
+                    wd = self.compute_euclidean_loss(filter_img_feature,aug_filter_img_feature)
+
+                    # wd_p,_,_=self.WD(filter_img.view(aug_filter_img.shape[0],-1),aug_filter_img.view(aug_filter_img.shape[0],-1))
             else:
                 wd,_,_=self.WD(filter_img.view(aug_filter_img.shape[0],-1),aug_filter_img.view(aug_filter_img.shape[0],-1)) # wd越小越相似
 
@@ -154,8 +107,10 @@ class Solver():
             # wd = 0.0002 * wd_p + wd_f # wd_pixel wd_feature
 
             ############################ wd ############################
-            if args.ablation:
-                loss = recorder.cost * loss_mse + 1 - loss_ssim + recorder.cost * lp_loss.mean()
+            if args.use_feature:
+                loss_sim = 1 - loss_ssim + 10 * lp_loss.mean() - 0.05 * loss_psnr
+                loss_far = - recorder.cost * wd
+                loss = loss_sim + loss_far
             else:
                 loss_sim = 1 - loss_ssim + 10 * lp_loss.mean() - 0.05 * loss_psnr
                 loss_far = - recorder.cost * wd
@@ -215,7 +170,38 @@ class Solver():
             recorder.cost_down_flag = True
 
 
-        if args.use_feature:
-            bar.set_description(f"Loss: {avg_loss}, lr: {self.optimizer.param_groups[0]['lr']}, SIM: {sim}, far:{far}, WD: {wd}, SSIM: {ssim}, pnsr:{psnr}, lp:{lp},mse:{mse},  cost:{recorder.cost}")
-        else:
-            bar.set_description(f"Loss: {avg_loss}, lr: {self.optimizer.param_groups[0]['lr']}, SIM: {sim}, far:{far}, WD: {wd},  SSIM: {ssim}, cost:{recorder.cost}, lp:{lp.mean()}")
+        # if args.use_feature:
+        bar.set_description(f"Loss: {avg_loss}, lr: {self.optimizer.param_groups[0]['lr']}, SIM: {sim:.5f}, far:{far}, WD: {wd}, SSIM: {ssim:.5f}, pnsr:{psnr:.5f}, lp:{lp:.5f},mse:{mse:.5f},  cost:{recorder.cost}")
+
+        # bar.set_description(f"Loss: {avg_loss}, lr: {self.optimizer.param_groups[0]['lr']}, SIM: {sim:.5f}, far:{far:.5f}, WD: {wd:.8f}, SSIM: {ssim:.5f}, pnsr:{psnr:.5f}, lp:{lp:.5f},mse:{mse:.5f},  cost:{recorder.cost}")
+        # else:
+        #     bar.set_description(f"Loss: {avg_loss}, lr: {self.optimizer.param_groups[0]['lr']}, SIM: {sim}, far:{far}, WD: {wd},  SSIM: {ssim}, cost:{recorder.cost}, lp:{lp.mean()}")
+
+
+    def compute_style_loss(self, generated_features, style_features):
+        style_loss = 0.0
+        for gen_feat, style_feat in zip(generated_features, style_features):
+            # G_gen = gram_matrix(gen_feat)
+            # G_style = gram_matrix(style_feat)
+
+            G_gen = gen_feat.view(gen_feat.shape[0],-1)
+            G_style = style_feat.view(style_feat.shape[0],-1)
+            wd,_,_=self.WD(G_gen,G_style)
+            # wd,_,_=WD(gen_feat,style_feat)
+            # style_loss += torch.nn.functional.mse_loss(G_gen, G_style)
+            style_loss += wd
+        return style_loss/5
+
+
+    def compute_euclidean_loss(self, generated_features, style_features):
+        loss = 0.0
+        for gen_feat, style_feat in zip(generated_features, style_features):
+            gen_feat=F.normalize(gen_feat,dim=1)
+            style_feat=F.normalize(style_feat,dim=1)
+            dis = self.euclidean_distance(gen_feat,style_feat)
+            loss += dis
+
+        return loss/3
+
+    def euclidean_distance(self, img1, img2):
+        return torch.sqrt(torch.sum((img1 - img2) ** 2))

@@ -137,7 +137,7 @@
 #### customized imagenet filter unet
 
 
-# CUDA_VISIBLE_DEVICES=3,4 nohup python main_moco.py \
+# CUDA_VISIBLE_DEVICES=0,1 nohup python main_moco.py \
 #                         -a resnet18 \
 #                         --lr 0.06 --batch-size 512 --multiprocessing-distributed \
 #                         --world-size 1 --rank 0 --aug-plus --mlp --cos --moco-align-w 0 \
@@ -148,7 +148,7 @@
 #                         > logs/train_cus_imagenet_unet.log  2>&1 &
 
 
-# CUDA_VISIBLE_DEVICES=2 nohup python eval_linear.py \
+# CUDA_VISIBLE_DEVICES=1 nohup python eval_linear.py \
 #                         --arch moco_resnet18 \
 #                         --weights save/custom_imagenet_unet_n02106550/mocom0.999_contr1tau0.2_mlp_aug+_cos_b512_lr0.06_e120,160,200/checkpoint_0199.pth.tar \
 #                         --train_file ../poison-generation/data/custom_imagenet_unet/train/rate_1.00_targeted_True_filelist.txt \

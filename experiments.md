@@ -23,7 +23,9 @@
 |  ssim0.8862_psnr25.24_lp0.0074_wd2.500 (swin transformer) | ||63||
 |  ssim0.9204_psnr25.10_lp0.0427_wd0.381 (simclr) | ||131||
 |  ssim0.8167_psnr23.66_lp0.0412_wd1.479 (moco pretrained by others) | ||617||
-
+|  ssim0.8033_psnr22.50_lp0.1015_wd0.724_moco_finetune | ||514||
+|  ssim0.9611_psnr32.04_lp0.0070_wd0.662_moco_finetune | ||96||
+|  ssim0.8479_psnr27.22_lp0.0202_wd1.496_resnet_scl_f | ||474||
 
 ---
 
@@ -100,7 +102,3 @@ Rottweiler,26       ,9.0       ,15.0 , ,23.0 ,161.0
 
 
 # todolist
-- [] 1. ablate wd，看同样ssim94，哪个效果更好
-- [] 2. ablate ssim，看同样wd，哪个效果更好
-- [] 3. 验证ssim=0.90的时候，wd=28007.5，是否可以比ssim=0.94达到更好的效果
-- [] 4. 验证FP达到3k-4k的时候，wd最小是多少，ssim最大是多少

@@ -149,7 +149,7 @@ def add_watermark(net,input_image_path,val=False):
 
     img_backdoor = backdoored_image.squeeze()
 
-    # img_backdoor = np.clip(img_backdoor, -3, 3) #限制颜色范围在0-1
+    img_backdoor = torch.clamp(img_backdoor, min=0, max=1) #限制颜色范围在0-1
 
     # sig = nn.Sigmoid()
     # img_backdoor = sig(img_backdoor)

@@ -137,3 +137,4 @@ OneDrive_1_2023-8-30.zip
 *.pth
 *wandb*
 events*
+simclr*

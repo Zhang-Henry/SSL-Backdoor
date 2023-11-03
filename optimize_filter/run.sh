@@ -13,22 +13,40 @@ timestamp=$(date +"%Y-%m-%d-%H-%M-%S")
 #     --cost_multiplier_down 1.2 \
 #     > logs/moco/filter_AttU_Net_wd_lpips_$timestamp.log 2>&1 &
 
+# nohup python main.py \
+#     --timestamp $timestamp \
+#     --lr 0.005 \
+#     --gpu 2 \
+#     --batch_size 38 \
+#     --ssim_threshold 0.75 \
+#     --psnr_threshold 15.0 \
+#     --lp_threshold 0.5 \
+#     --n_epoch 150 \
+#     --step_size 50 \
+#     --patience 5 \
+#     --init_cost 0.00025 \
+#     --cost_multiplier_up 1.04 \
+#     --cost_multiplier_down 1.08 \
+#     --resume /home/hrzhang/projects/SSL-Backdoor/optimize_filter/trigger/moco/2023-11-01-19-07-19/ssim0.8186_psnr22.45_lp0.0845_wd23291.713.pt \
+#     > logs/moco/filter_nofeature_$timestamp.log 2>&1 &
+
+######### use feature #########
 nohup python main.py \
     --timestamp $timestamp \
-    --lr 0.05 \
-    --gpu 3 \
-    --batch_size 35 \
+    --lr 0.005 \
+    --gpu 2 \
+    --batch_size 43 \
     --ssim_threshold 0.80 \
     --psnr_threshold 20.0 \
     --lp_threshold 0.5 \
     --n_epoch 150 \
     --step_size 50 \
     --patience 5 \
-    --init_cost 15 \
-    --cost_multiplier_up 1.3 \
-    --cost_multiplier_down 1.5 \
+    --init_cost 2 \
+    --cost_multiplier_up 1.5 \
+    --cost_multiplier_down 2 \
     --use_feature \
-    > logs/moco/filter_moco_pretrain_$timestamp.log 2>&1 &
+    > logs/moco/filter_eucliden_$timestamp.log 2>&1 &
 
 
 
@@ -47,13 +65,3 @@ nohup python main.py \
 #     > logs/moco/filter_unet_wd_ablation_$timestamp.log 2>&1 &
 
 
-######### Finetune #############
-
-nohup python main.py \
-    --timestamp $timestamp \
-    --lr 0.01 \
-    --gpu 2 \
-    --batch_size 1400 \
-    --n_epoch 50 \
-    --mode finetune_backbone \
-    > backbone/logs/moco_finetune_$timestamp.log 2>&1 &
