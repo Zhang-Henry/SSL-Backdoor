@@ -98,7 +98,8 @@ def add_watermark(net,input_image_path,val=False):
     trans = transforms.Compose([
                                 transforms.Resize(256),
                                 transforms.CenterCrop(224),
-                                transforms.ToTensor()])
+                                transforms.ToTensor(),
+                                transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])])
 
 
     base_image = Image.open(input_image_path).convert('RGB')
@@ -143,13 +144,16 @@ def add_watermark(net,input_image_path,val=False):
 
     unet=net.cuda()
     img=base_image.cuda()
-    # if hasattr(unet, 'sig'):  # 假设最后一层被命名为 'fc_layer'
-    #     delattr(unet, 'sig')
     backdoored_image=unet(img.unsqueeze(0))
-
     img_backdoor = backdoored_image.squeeze()
 
-    img_backdoor = torch.clamp(img_backdoor, min=0, max=1) #限制颜色范围在0-1
+    mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1).cuda()
+    std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1).cuda()
+    img_backdoor = img_backdoor * std + mean # denormalize
+    sig=torch.nn.Sigmoid()
+    img_backdoor = sig(img_backdoor)
+
+    # img_backdoor = torch.clamp(img_backdoor, min=0, max=1) #限制颜色范围在0-1
 
     # sig = nn.Sigmoid()
     # img_backdoor = sig(img_backdoor)

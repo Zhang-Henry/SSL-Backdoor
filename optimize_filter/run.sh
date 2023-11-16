@@ -35,18 +35,17 @@ nohup python main.py \
     --timestamp $timestamp \
     --lr 0.005 \
     --gpu 2 \
-    --batch_size 43 \
-    --ssim_threshold 0.80 \
+    --batch_size 16 \
+    --ssim_threshold 0.90 \
     --psnr_threshold 20.0 \
     --lp_threshold 0.5 \
     --n_epoch 150 \
     --step_size 50 \
     --patience 5 \
-    --init_cost 2 \
+    --init_cost 1 \
     --cost_multiplier_up 1.5 \
     --cost_multiplier_down 2 \
-    --use_feature \
-    > logs/moco/filter_eucliden_$timestamp.log 2>&1 &
+    > logs/moco/filter_color_$timestamp.log 2>&1 &
 
 
 

@@ -51,14 +51,14 @@
             "program": "/home/hrzhang/projects/SSL-Backdoor/optimize_filter/main.py",
             "console": "integratedTerminal",
             "args": [
-                "--use_feature",
+                // "--use_feature",
                 "--gpu",
-                "0",
+                "2",
                 "--batch_size",
                 "4"
             ],
             "env": {
-                "CUDA_VISIBLE_DEVICES": "0"
+                "CUDA_VISIBLE_DEVICES": "2"
             },
             "justMyCode": true,
             "cwd": "${fileDirname}",

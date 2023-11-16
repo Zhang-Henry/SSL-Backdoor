@@ -9,8 +9,8 @@ from torchvision.models import resnet50, ResNet50_Weights,vit_l_16,ViT_L_16_Weig
 from torch.nn import MSELoss,Identity
 from moco.builder import MoCo
 from collections import OrderedDict
-from simclr_converter.resnet_wider import resnet50x1, resnet50x2, resnet50x4
-from pytorch_pretrained_vit import ViT
+# from simclr_converter.resnet_wider import resnet50x1, resnet50x2, resnet50x4
+# from pytorch_pretrained_vit import ViT
 import gc
 
 """
@@ -318,41 +318,20 @@ class Loss:
         self.losses=[]
         self.avg=0.0
 
-
 class Loss_Tracker:
-    def __init__(self) -> None:
-        self.loss=Loss()
-        self.wd=Loss()
-        self.ssim=Loss()
-        self.psnr=Loss()
-        self.lp=Loss()
-        self.mse=Loss()
-        self.sim=Loss()
-        self.far=Loss()
+    def __init__(self, loss_names):
+        self.losses = {name: Loss() for name in loss_names}
 
-    def update(self,loss,wd,ssim,psnr,lp,mse,sim,far):
-        self.loss.update(loss)
-        self.wd.update(wd)
-        self.ssim.update(ssim)
-        self.psnr.update(psnr)
-        self.lp.update(lp)
-        self.mse.update(mse)
-        self.sim.update(sim)
-        self.far.update(far)
+    def update(self, losses):
+        for name, value in losses.items():
+            self.losses[name].update(value)
 
     def get_avg_loss(self):
-        return self.loss.avg,self.wd.avg,self.ssim.avg,self.psnr.avg,self.lp.avg,self.mse.avg,self.sim.avg,self.far.avg
+        return {name: loss.avg for name, loss in self.losses.items()}
 
     def reset(self):
-        self.loss.reset()
-        self.wd.reset()
-        self.ssim.reset()
-        self.psnr.reset()
-        self.lp.reset()
-        self.mse.reset()
-        self.sim.reset()
-        self.far.reset()
-
+        for loss in self.losses.values():
+            loss.reset()
 
 
 class ResNetFeatureExtractor(torch.nn.Module):
@@ -404,11 +383,11 @@ def gram_matrix(input):
 
 
 def load_backbone():
-        # self.backbone=resnet50(weights=ResNet50_Weights.IMAGENET1K_V2).to(self.device).eval()
+        backbone=resnet50(weights=ResNet50_Weights.IMAGENET1K_V2).eval()
         # self.backbone=vit_l_16(weights=ViT_L_16_Weights.IMAGENET1K_SWAG_LINEAR_V1).to(self.device).eval()
         # self.backbone=vit_b_16(weights=ViT_B_16_Weights.IMAGENET1K_SWAG_LINEAR_V1).to(self.device).eval()
         # self.backbone=swin_s(weights=Swin_S_Weights.IMAGENET1K_V1).to(self.device).eval()
-        # self.backbone.head=Identity()
+        backbone.head=Identity()
 
         ################ simclr pretrained #################
         # self.backbone = resnet50x1().to(self.device) # simclr
@@ -421,28 +400,28 @@ def load_backbone():
         # self.backbone.load_state_dict(sd)
 
         ############# moco trained by myself #################
-        moco=MoCo(
-            models.__dict__['resnet18'],
-            128, 65536, 0.999,
-            contr_tau=0.2,
-            align_alpha=None,
-            unif_t=None,
-            unif_intra_batch=True,
-            mlp=True) # moco trained by myself
+        # moco=MoCo(
+        #     models.__dict__['resnet18'],
+        #     128, 65536, 0.999,
+        #     contr_tau=0.2,
+        #     align_alpha=None,
+        #     unif_t=None,
+        #     unif_intra_batch=True,
+        #     mlp=True) # moco trained by myself
 
-        checkpoint = torch.load('../moco/save/custom_imagenet_n02106550/mocom0.999_contr1tau0.2_mlp_aug+_cos_b256_lr0.06_e120,160,200/checkpoint_0199.pth.tar', map_location=torch.device('cuda:0'))
-        state_dict =checkpoint['state_dict']
+        # checkpoint = torch.load('../moco/save/custom_imagenet_n02106550/mocom0.999_contr1tau0.2_mlp_aug+_cos_b256_lr0.06_e120,160,200/checkpoint_0199.pth.tar', map_location=torch.device('cuda:0'))
+        # state_dict =checkpoint['state_dict']
 
-        new_state_dict = OrderedDict()
+        # new_state_dict = OrderedDict()
 
-        for k, v in state_dict.items():
-            if 'module' in k:
-                k = k.split('.')[1:]
-                k = '.'.join(k)
-            new_state_dict[k]=v
+        # for k, v in state_dict.items():
+        #     if 'module' in k:
+        #         k = k.split('.')[1:]
+        #         k = '.'.join(k)
+        #     new_state_dict[k]=v
 
-        moco.load_state_dict(new_state_dict)
-        backbone=moco.encoder_q
+        # moco.load_state_dict(new_state_dict)
+        # backbone=moco.encoder_q
 
         ############### moco pretrained https://github.com/facebookresearch/moco ##############
         # model = models.__dict__['resnet50']()

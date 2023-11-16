@@ -2,7 +2,7 @@
 
 # CUDA_VISIBLE_DEVICES=5 nohup python generate_poison_filter.py cfg/custom_imagenet_unet.cfg > posion.log
 
-CUDA_VISIBLE_DEVICES=0 python generate_poison_filter.py cfg/custom_imagenet_test.cfg
+CUDA_VISIBLE_DEVICES=2 python generate_poison_filter.py cfg/custom_imagenet_test.cfg
 
 # CUDA_VISIBLE_DEVICES=2 nohup python generate_poison_ctrl.py cfg/custom_imagenet_ctrl.cfg > posion.log  2>&1 &
 

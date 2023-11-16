@@ -13,8 +13,7 @@ aug = transforms.Compose([
     transforms.RandomApply([loader.GaussianBlur([.1, 2.])], p=0.5),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
-    # transforms.Normalize(mean=[0.485, 0.456, 0.406],
-    #                                  std=[0.229, 0.224, 0.225])
+    transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
 ])
 
 # aug = transforms.Compose([
@@ -34,14 +33,27 @@ aug = transforms.Compose([
 
 
 def create_data_loader(args):
-    trans=transforms.Compose([
+    clean_trans=transforms.Compose([
         transforms.RandomResizedCrop(224, scale=(0.2, 1.)),
         transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
         ])
+
+    bd_trans = transforms.Compose([
+        transforms.RandomResizedCrop(224, scale=(0.2, 1.)),
+        transforms.RandomApply([
+            transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
+        ], p=0.8),
+        transforms.RandomGrayscale(p=0.2),
+        transforms.RandomApply([loader.GaussianBlur([.1, 2.])], p=0.5),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
+    ])
 
     train_dataset = dataset.FileListDataset(
         '/home/hrzhang/projects/SSL-Backdoor/poison-generation/data/clean/train/clean_filelist_5subset.txt',
-        trans)
+        clean_trans,bd_trans)
 
     train_sampler = None
 
